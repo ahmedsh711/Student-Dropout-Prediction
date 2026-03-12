@@ -28,7 +28,7 @@ We built a machine learning pipeline trained on 4,349 students from a Portuguese
 
 - **Source:** Realinho et al. (2021) — publicly available on UCI / Kaggle
 - **Students:** 4,349 (after removing 75 data quality errors)
-- **Features:** 24 selected from an original 35
+- **Features:** 22 selected from an original 35
 - **Target classes:** Dropout (32%) · Enrolled (18%) · Graduate (50%)
 
 The features cover three areas: academic performance (units approved, grades), financial status (tuition, scholarship, debt), and personal background (age, course, application order).
@@ -47,7 +47,7 @@ The features cover three areas: academic performance (units approved, grades), f
 
 **3. Select features statistically** — Chi-Square + Cramér's V for categoricals, Spearman correlation for numericals. Only kept features with a statistically significant relationship to the outcome.
 
-**4. Train and tune** — trained 10 baseline models (Logistic Regression, Decision Tree, Random Forest, SVM, MLP, XGBoost, LightGBM, CatBoost, AdaBoost, KNN), then tuned the best one (Random Forest) using RandomizedSearchCV with 80 iterations and 5-fold cross-validation optimizing for F1-macro. SMOTE is applied inside each fold via ImbPipeline so validation folds never see synthetic samples.
+**4. Train and tune** — trained 12 baseline models (Logistic Regression, Decision Tree, Random Forest, SVM, MLP, XGBoost, LightGBM, CatBoost, AdaBoost, KNN, and two Dummy baselines), then tuned the top 7 using RandomizedSearchCV with 80 iterations and 5-fold cross-validation optimizing for F1-macro. SMOTE is applied inside each fold via ImbPipeline so validation folds never see synthetic samples.
 
 **5. Calibrate the Enrolled threshold** — the default 0.5 cutoff is too conservative for the smallest class. We sweep thresholds down and pick the one that maximizes Enrolled F1 without losing more than 0.01 on overall F1-macro.
 
@@ -57,20 +57,20 @@ The features cover three areas: academic performance (units approved, grades), f
 
 | Model | F1-macro | Balanced Acc | AUC |
 |---|---|---|---|
-| **Random Forest (Tuned)** | **0.7267** | **0.7267** | 0.8945 |
-| XGBoost (Baseline) | 0.7236 | 0.7220 | 0.8910 |
-| Soft Voting (Ensemble) | 0.7200 | 0.7259 | 0.9007 |
-| Stacking (LR meta) | 0.7194 | 0.7319 | 0.9006 |
+| **Random Forest (Tuned)** | **0.7392** | **0.7386** | **0.8942** |
+| LightGBM (Tuned) | 0.7383 | 0.7369 | 0.8956 |
+| Soft Voting (Ensemble) | 0.7317 | 0.7341 | 0.8987 |
+| Stacking (LR meta) | 0.7281 | 0.7385 | 0.8968 |
 
 Per-class breakdown for the winning model:
 
 | Class | F1 | Precision | Recall |
 |---|---|---|---|
-| Dropout | 0.79 | 0.85 | 0.74 |
-| Enrolled | 0.53 | 0.50 | 0.57 |
-| Graduate | 0.86 | 0.85 | 0.88 |
+| Dropout | 0.79 | 0.86 | 0.73 |
+| Enrolled | 0.56 | 0.53 | 0.59 |
+| Graduate | 0.87 | 0.85 | 0.89 |
 
-Enrolled is the hardest class and always will be — 18% of the data, features that overlap with both other classes. The 0.53 F1 is close to the ceiling with semester-aggregated features.
+Enrolled is the hardest class and always will be — 18% of the data, features that overlap with both other classes. The 0.56 F1 is close to the ceiling with semester-aggregated features.
 
 ---
 
@@ -82,7 +82,7 @@ Because we care equally about all three classes. Weighted F1 would let a model i
 
 ## What we tried that didn't work
 
-**SMOTE before cross-validation** — applying SMOTE to the full training set before CV caused synthetic samples to leak into validation folds, inflating CV scores to ~0.82 while test performance sat at ~0.70. Fixed by moving SMOTE inside each fold using ImbPipeline.
+**SMOTE before cross-validation** — applying SMOTE to the full training set before CV caused synthetic samples to leak into validation folds, inflating CV scores to ~0.84 while test performance sat at ~0.70. Fixed by moving SMOTE inside each fold using ImbPipeline.
 
 **Optuna Bayesian optimization** — smarter search, same ceiling. RF with Optuna scored 0.7248 vs 0.7267 with RandomizedSearch. The bottleneck is the data, not the optimizer.
 
