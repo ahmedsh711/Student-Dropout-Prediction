@@ -5,8 +5,8 @@
 
 ## Contributors
 
-- Rodina Mohamed Kamal Khallaf
-  https://www.linkedin.com/in/rodina-mohamed-kamal/
+- Rodina Mohamed 
+  [Github](https://github.com/Rodina222)
 
 ---
 
